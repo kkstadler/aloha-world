@@ -1,0 +1,379 @@
+@model AlohaWorld.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    // Serialize restriction data for JS
+    var restrictionJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.CountryRestrictions.Select(r => new {
+            code       = r.CountryCode,
+            name       = r.CountryName,
+            color      = r.RestrictedColor,
+            label      = r.RestrictionLabel,
+            notes      = r.Notes,
+            quarantine = r.QuarantineDays
+        })
+    );
+}
+
+<!-- ── Page header ───────────────────────────────────────── -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h4 class="mb-0 fw-bold"><i class="bi bi-speedometer2 me-2 text-primary"></i>Pet Compliance Dashboard</h4>
+        <small class="text-muted">Last updated: @Model.Stats.LastUpdated.ToString("MMM d, yyyy h:mm tt")</small>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge bg-secondary"><i class="bi bi-house me-1"></i>@Model.Stats.TotalPets pets in household</span>
+    </div>
+</div>
+
+<!-- ── Stat row ─────────────────────────────────────────── -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#198754,#20c997)">
+            <div><div class="stat-icon"><i class="bi bi-check-circle"></i></div></div>
+            <div>
+                <div class="stat-value">@Model.Stats.CountriesAllowed</div>
+                <div class="stat-label">Allowed / Compliant</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#dc3545,#e85d72)">
+            <div><div class="stat-icon"><i class="bi bi-slash-circle"></i></div></div>
+            <div>
+                <div class="stat-value">@Model.Stats.CountriesBanned</div>
+                <div class="stat-label">Countries Banned</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#f7c948,#fd7e14)">
+            <div><div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div></div>
+            <div>
+                <div class="stat-value">@Model.Stats.CountriesRestricted</div>
+                <div class="stat-label">Restricted Entry</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#0d6efd,#6610f2)">
+            <div><div class="stat-icon"><i class="bi bi-syringe"></i></div></div>
+            <div>
+                <div class="stat-value">@Model.Stats.UpcomingVaccinations</div>
+                <div class="stat-label">Upcoming Vaccines</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Main dashboard grid ──────────────────────────────────── -->
+<div class="dashboard-grid">
+
+    <!-- ====================================================
+         CARD: Primary Pet Profile
+         ==================================================== -->
+    <div class="dash-card col-span-4">
+        <div class="dash-card-header" data-bs-toggle="collapse" data-bs-target="#card-pet-profile">
+            <h6 class="card-title">
+                <i class="bi bi-person-badge text-primary"></i> Primary Pet Profile
+            </h6>
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </div>
+        <div class="dash-card-body collapse show" id="card-pet-profile">
+            @if (Model.Pet != null)
+            {
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <img src="@Model.Pet.ImageUrl" class="pet-avatar" alt="@Model.Pet.Name" />
+                    <div>
+                        <h5 class="mb-0 fw-bold">@Model.Pet.Name</h5>
+                        <small class="text-muted">@Model.Pet.Breed &bull; @Model.Pet.AgeYears yrs</small><br />
+                        <small class="text-muted">Owner: @Model.Pet.OwnerName</small>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    @foreach (var tag in Model.Pet.Tags)
+                    {
+                        <span class="pet-tag me-1">@tag</span>
+                    }
+                </div>
+                <hr class="my-2" />
+                <dl class="row mb-0" style="font-size:.83rem">
+                    <dt class="col-5 text-muted">Pet Type</dt>
+                    <dd class="col-7">@Model.Pet.Type</dd>
+
+                    @if (Model.HasMicrochip)
+                    {
+                        <dt class="col-5 text-muted">Microchip</dt>
+                        <dd class="col-7"><code>@Model.Pet.MicrochipNumber</code></dd>
+                    }
+
+                    @* Conditional: only shown when passport data exists in ViewModel *@
+                    @if (Model.HasPetPassport)
+                    {
+                        <dt class="col-5 text-muted">EU Passport</dt>
+                        <dd class="col-7">
+                            <span class="badge bg-success"><i class="bi bi-patch-check me-1"></i>@Model.Pet.PassportNumber</span>
+                        </dd>
+                    }
+
+                    <dt class="col-5 text-muted">Address</dt>
+                    <dd class="col-7">@Model.Pet.HomeAddress.Street<br />@Model.Pet.HomeAddress.City, @Model.Pet.HomeAddress.State</dd>
+                </dl>
+            }
+        </div>
+    </div>
+
+    <!-- ====================================================
+         CARD: Address Map
+         ==================================================== -->
+    <div class="dash-card col-span-8">
+        <div class="dash-card-header" data-bs-toggle="collapse" data-bs-target="#card-addr-map">
+            <h6 class="card-title">
+                <i class="bi bi-geo-alt text-danger"></i> Home Location Map
+                @if (Model.MapAddress != null)
+                {
+                    <small class="text-muted fw-normal ms-2">@Model.MapAddress.FullAddress</small>
+                }
+            </h6>
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </div>
+        <div class="dash-card-body collapse show" id="card-addr-map">
+            @if (Model.MapAddress != null)
+            {
+                <div id="address-map"
+                     data-lat="@Model.MapAddress.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                     data-lng="@Model.MapAddress.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                     data-label="@Model.MapAddress.FullAddress">
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-secondary">No address data available.</div>
+            }
+        </div>
+    </div>
+
+    <!-- ====================================================
+         CARD: Travel Alerts  (CONDITIONAL — hidden when null)
+         ==================================================== -->
+    @if (Model.HasTravelAlerts)
+    {
+        <div class="dash-card col-span-4">
+            <div class="dash-card-header" data-bs-toggle="collapse" data-bs-target="#card-alerts">
+                <h6 class="card-title">
+                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> Travel Alerts
+                    <span class="badge bg-danger ms-1">@Model.TravelAlerts!.Count</span>
+                </h6>
+                <i class="bi bi-chevron-down collapse-icon"></i>
+            </div>
+            <div class="dash-card-body collapse show" id="card-alerts">
+                @foreach (var alert in Model.TravelAlerts!)
+                {
+                    var severityCss = alert.Severity switch
+                    {
+                        AlohaWorld.Models.AlertSeverity.Danger  => "danger",
+                        AlohaWorld.Models.AlertSeverity.Warning => "warning",
+                        _ => "info"
+                    };
+                    <div class="alert-item @severityCss">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <strong style="font-size:.85rem">@alert.Title</strong>
+                            <span class="@alert.BadgeClass ms-2" style="white-space:nowrap;font-size:.7rem">@alert.CountryName</span>
+                        </div>
+                        <p class="mb-1 mt-1" style="font-size:.8rem">@alert.Message</p>
+                        <small class="text-muted">Issued @alert.IssuedDate.ToString("MMM d, yyyy")</small>
+                    </div>
+                }
+                <div class="mt-2">
+                    <a href="/Dashboard/IndexNoAlerts" class="btn btn-sm btn-outline-secondary w-100">
+                        <i class="bi bi-eye-slash me-1"></i>Demo: Hide This Card
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ====================================================
+         CARD: Upcoming Health Events  (CONDITIONAL — hidden when null)
+         ==================================================== -->
+    @if (Model.HasUpcomingHealth)
+    {
+        <div class="dash-card col-span-4">
+            <div class="dash-card-header" data-bs-toggle="collapse" data-bs-target="#card-health">
+                <h6 class="card-title">
+                    <i class="bi bi-heart-pulse text-danger"></i> Upcoming Health Events
+                    <span class="badge bg-warning text-dark ms-1">@Model.UpcomingHealthEvents!.Count</span>
+                </h6>
+                <i class="bi bi-chevron-down collapse-icon"></i>
+            </div>
+            <div class="dash-card-body collapse show" id="card-health">
+                <div class="timeline">
+                    @foreach (var rec in Model.UpcomingHealthEvents!.OrderBy(r => r.NextDueDate))
+                    {
+                        var tlClass = rec.IsOverdue ? "overdue" : rec.IsUpcoming ? "upcoming" : "ok";
+                        <div class="timeline-item @tlClass">
+                            <div class="fw-semibold" style="font-size:.85rem">@rec.Title</div>
+                            <div style="font-size:.78rem" class="text-muted">@rec.ClinicName &bull; @rec.VetName</div>
+                            @if (rec.NextDueDate.HasValue)
+                            {
+                                <small class="@(rec.IsOverdue ? "text-danger" : "text-warning")">
+                                    Due @rec.NextDueDate.Value.ToString("MMM d, yyyy")
+                                </small>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ====================================================
+         CARD: Household Pets
+         ==================================================== -->
+    <div class="dash-card col-span-4">
+        <div class="dash-card-header" data-bs-toggle="collapse" data-bs-target="#card-household">
+            <h6 class="card-title">
+                <i class="bi bi-house-heart text-success"></i> Household Pets
+            </h6>
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </div>
+        <div class="dash-card-body collapse show" id="card-household">
+            @foreach (var p in Model.HouseholdPets)
+            {
+                <div class="pet-row">
+                    <img src="@p.ImageUrl" class="pet-thumb" alt="@p.Name" />
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold" style="font-size:.875rem">@p.Name
+                            @if (p.Id == Model.Pet?.Id)
+                            {
+                                <span class="badge bg-primary ms-1" style="font-size:.6rem">Primary</span>
+                            }
+                        </div>
+                        <small class="text-muted">@p.Breed &bull; @p.AgeYears yrs</small>
+                    </div>
+                    <div>
+                        @if (p.MicrochipNumber != null)
+                        {
+                            <i class="bi bi-cpu text-info" title="Microchipped"></i>
+                        }
+                        @if (p.PassportNumber != null)
+                        {
+                            <i class="bi bi-passport text-success ms-1" title="EU Passport"></i>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ====================================================
+         CARD: Europe & Asia — Breed Restriction Map
+         ==================================================== -->
+    <div class="dash-card col-span-12">
+        <div class="dash-card-header" data-bs-toggle="collapse" data-bs-target="#card-restriction-map">
+            <h6 class="card-title">
+                <i class="bi bi-map text-primary"></i> Europe &amp; Asia — Pit Bull Breed Restriction Map
+                <small class="text-muted fw-normal ms-2">Click any highlighted country for details</small>
+            </h6>
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </div>
+        <div class="dash-card-body collapse show" id="card-restriction-map">
+            <!-- Legend -->
+            <div class="d-flex flex-wrap gap-3 mb-2">
+                @foreach (var kvp in Model.RestrictionCounts.OrderBy(k => k.Key))
+                {
+                    var sample = Model.CountryRestrictions.First(c => c.PitbullRestriction == kvp.Key);
+                    <div class="d-flex align-items-center gap-1" style="font-size:.8rem">
+                        <span class="legend-dot" style="background:@sample.RestrictedColor"></span>
+                        <span>@sample.RestrictionLabel <span class="text-muted">&times;@kvp.Value</span></span>
+                    </div>
+                }
+                <div class="d-flex align-items-center gap-1" style="font-size:.8rem">
+                    <span class="legend-dot" style="background:#cccccc"></span>
+                    <span class="text-muted">No data</span>
+                </div>
+            </div>
+            <div id="restriction-map"></div>
+        </div>
+    </div>
+
+    <!-- ====================================================
+         CARD: Country Restriction Table
+         ==================================================== -->
+    <div class="dash-card col-span-12">
+        <div class="dash-card-header" data-bs-toggle="collapse" data-bs-target="#card-restriction-table">
+            <h6 class="card-title">
+                <i class="bi bi-table text-secondary"></i> Country Restriction Details
+                <span class="badge bg-secondary ms-1">@Model.CountryRestrictions.Count countries</span>
+            </h6>
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </div>
+        <div class="dash-card-body p-0 collapse show" id="card-restriction-table">
+            <div style="overflow-x:auto">
+                <table class="table table-sm table-hover mb-0" style="font-size:.82rem">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Country</th>
+                            <th>Continent</th>
+                            <th>Pit Bull Status</th>
+                            <th>Microchip</th>
+                            <th>Rabies Vax</th>
+                            <th>Quarantine</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.CountryRestrictions.OrderBy(c => c.Continent).ThenBy(c => c.CountryName))
+                        {
+                            <tr>
+                                <td class="fw-semibold">@c.CountryName</td>
+                                <td><span class="badge @(c.Continent == "Europe" ? "bg-info text-dark" : "bg-warning text-dark")">@c.Continent</span></td>
+                                <td>
+                                    <span class="badge" style="background:@c.RestrictedColor">@c.RestrictionLabel</span>
+                                </td>
+                                <td>
+                                    @if (c.RequiresMicrochip)
+                                    {
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-dash text-muted"></i>
+                                    }
+                                </td>
+                                <td>
+                                    @if (c.RequiresRabiesVaccination)
+                                    {
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-dash text-muted"></i>
+                                    }
+                                </td>
+                                <td>
+                                    @if (c.QuarantineDays.HasValue)
+                                    {
+                                        <span class="badge bg-warning text-dark">@c.QuarantineDays days</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="text-muted" style="max-width:280px">@c.Notes</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /dashboard-grid -->
+
+@section Scripts {
+<script>
+    // Pass server-side restriction data to the JS map
+    const RESTRICTION_DATA = @Html.Raw(restrictionJson);
+</script>
+}
