@@ -1,0 +1,217 @@
+/* ============================================================
+   Aloha World Dashboard — Custom Styles
+   ============================================================ */
+
+:root {
+  --card-transition: 0.25s ease;
+  --shadow-card: 0 2px 12px rgba(0,0,0,.10);
+  --shadow-hover: 0 6px 24px rgba(0,0,0,.18);
+}
+
+body {
+  background: #f0f2f5;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Dashboard grid ─────────────────────────────────────── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1rem;
+}
+
+/* span helpers */
+.col-span-3  { grid-column: span 3; }
+.col-span-4  { grid-column: span 4; }
+.col-span-6  { grid-column: span 6; }
+.col-span-8  { grid-column: span 8; }
+.col-span-12 { grid-column: span 12; }
+
+@media (max-width: 1199px) {
+  .col-span-3, .col-span-4 { grid-column: span 6; }
+  .col-span-6, .col-span-8 { grid-column: span 12; }
+}
+@media (max-width: 767px) {
+  .col-span-3, .col-span-4,
+  .col-span-6, .col-span-8,
+  .col-span-12 { grid-column: span 12; }
+}
+
+/* ── Dashboard card ─────────────────────────────────────── */
+.dash-card {
+  background: #fff;
+  border-radius: .75rem;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--card-transition);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.dash-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.dash-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+  background: #fafafa;
+  cursor: pointer;
+  user-select: none;
+}
+.dash-card-header .card-title {
+  font-size: .875rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.dash-card-body {
+  padding: 1rem;
+  flex: 1;
+}
+
+/* expand / collapse toggle */
+.dash-card-header .collapse-icon {
+  font-size: 1rem;
+  transition: transform var(--card-transition);
+  color: #6c757d;
+}
+.dash-card.collapsed .collapse-icon {
+  transform: rotate(-90deg);
+}
+.dash-card.collapsed .dash-card-body {
+  display: none;
+}
+
+/* ── Stat cards ─────────────────────────────────────────── */
+.stat-card {
+  border-radius: .75rem;
+  padding: 1rem 1.25rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow-card);
+}
+.stat-card .stat-icon {
+  font-size: 2rem;
+  opacity: .85;
+}
+.stat-card .stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.stat-card .stat-label {
+  font-size: .75rem;
+  opacity: .85;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* ── Maps ───────────────────────────────────────────────── */
+#address-map, #restriction-map {
+  border-radius: .5rem;
+  width: 100%;
+}
+#address-map    { height: 320px; }
+#restriction-map { height: 460px; }
+
+/* ── Pet profile card ───────────────────────────────────── */
+.pet-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #dee2e6;
+}
+.pet-tag {
+  display: inline-block;
+  font-size: .7rem;
+  padding: .2em .55em;
+  border-radius: 999px;
+  font-weight: 600;
+  background: #e9ecef;
+  color: #495057;
+}
+
+/* ── Health timeline ────────────────────────────────────── */
+.timeline {
+  position: relative;
+  padding-left: 1.5rem;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: .5rem;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: #dee2e6;
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: .85rem;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -1.25rem;
+  top: .35rem;
+  width: .65rem;
+  height: .65rem;
+  border-radius: 50%;
+  background: #6c757d;
+}
+.timeline-item.overdue::before  { background: #dc3545; }
+.timeline-item.upcoming::before { background: #fd7e14; }
+.timeline-item.ok::before       { background: #198754; }
+
+/* ── Map legend ─────────────────────────────────────────── */
+.map-legend {
+  background: rgba(255,255,255,.9);
+  padding: .5rem .75rem;
+  border-radius: .5rem;
+  box-shadow: 0 1px 6px rgba(0,0,0,.2);
+  font-size: .78rem;
+  line-height: 1.8;
+}
+.legend-dot {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: 3px;
+  margin-right: .35rem;
+  vertical-align: middle;
+}
+
+/* ── Travel alerts ──────────────────────────────────────── */
+.alert-item {
+  border-left: 4px solid transparent;
+  padding: .6rem .85rem;
+  border-radius: 0 .4rem .4rem 0;
+  margin-bottom: .5rem;
+  background: #f8f9fa;
+}
+.alert-item.danger  { border-color: #dc3545; background: #fff5f5; }
+.alert-item.warning { border-color: #fd7e14; background: #fffbf0; }
+.alert-item.info    { border-color: #0dcaf0; background: #f0fbff; }
+
+/* ── Household pet list ─────────────────────────────────── */
+.pet-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.pet-row:last-child { border-bottom: none; }
+.pet-thumb {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e9ecef;
+  flex-shrink: 0;
+}
